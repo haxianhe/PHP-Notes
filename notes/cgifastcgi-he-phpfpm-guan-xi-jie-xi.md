@@ -1,3 +1,5 @@
+# CGI、FastCGI和PHP-FPM关系解析
+
 在搭建 LAMP/LNMP 服务器时，会经常遇到 PHP-FPM、FastCGI和CGI 这几个概念。如果对它们一知半解，很难搭建出高性能的服务器。接下来我们就以图形方式，解释这些概念之间的关系。
 
 ## 基础
@@ -12,21 +14,21 @@
 
 当Web Server收到 index.php 这个请求后，会启动对应的 CGI 程序，这里就是PHP的解析器。接下来PHP解析器会解析php.ini文件，初始化执行环境，然后处理请求，再以规定CGI规定的格式返回处理后的结果，退出进程，Web server再把结果返回给浏览器。这就是一个完整的动态PHP Web访问流程，接下来再引出这些概念，就好理解多了，
 
-- **CGI**：是 Web Server 与 Web Application 之间数据交换的一种协议。
-- **FastCGI**：同 CGI，是一种通信协议，但比 CGI 在效率上做了一些优化。同样，SCGI 协议与 FastCGI 类似。
-- **PHP-CGI**：是 PHP （Web Application）对 Web Server 提供的 CGI 协议的接口程序。
-- **PHP-FPM**：是 PHP（Web Application）对 Web Server 提供的 FastCGI 协议的接口程序，额外还提供了相对智能一些任务管理。
+* **CGI**：是 Web Server 与 Web Application 之间数据交换的一种协议。
+* **FastCGI**：同 CGI，是一种通信协议，但比 CGI 在效率上做了一些优化。同样，SCGI 协议与 FastCGI 类似。
+* **PHP-CGI**：是 PHP （Web Application）对 Web Server 提供的 CGI 协议的接口程序。
+* **PHP-FPM**：是 PHP（Web Application）对 Web Server 提供的 FastCGI 协议的接口程序，额外还提供了相对智能一些任务管理。
 
 在Web中的一些概念：
 
-- Web Server 一般指Apache、Nginx、IIS、Lighttpd、Tomcat等服务器，
-- Web Application 一般指PHP、Java、Asp.net等应用程序。
+* Web Server 一般指Apache、Nginx、IIS、Lighttpd、Tomcat等服务器，
+* Web Application 一般指PHP、Java、Asp.net等应用程序。
 
 ## PHP Module加载方式
 
 在了解 CGI 之前，我们先了解一下Web server 传递数据的另外一种方法：PHP Module加载方式。以 Apache 为例，在PHP Module方式中，是不是在 Apache 的配置文件 httpd.conf 中加上这样几句：
 
-```
+```text
 # 加入以下2句
 LoadModule php5_module D:/php/php5apache2_2.dll
 AddType application/x-httpd-php .php
@@ -39,33 +41,33 @@ AddType application/x-httpd-php .php
 
 上面是 Windows 下安装php和apache环境后手动配置，在linux下源码安装大致是这样配置的：
 
-```
+```text
 # ./configure --with-mysql=/usr/local --with-apache=/usr/local/apache --enable-track-vars
 ```
 
-所以，这种方式，他们的共同本质都是用 LoadModule 来加载 php5_module，就是**把php作为apache的一个子模块来运行**。当通过web访问php文件时，apache就会调用php5_module来解析php代码。
+所以，这种方式，他们的共同本质都是用 LoadModule 来加载 php5\_module，就是**把php作为apache的一个子模块来运行**。当通过web访问php文件时，apache就会调用php5\_module来解析php代码。
 
-那么php5_module是怎么来将数据传给php解析器来解析php代码的呢？答案是通过sapi。
+那么php5\_module是怎么来将数据传给php解析器来解析php代码的呢？答案是通过sapi。
 
 我们再来看一张图，详细的说说apache 与 php 与 sapi的关系：
 
 ![](https://raw.githubusercontent.com/haxianhe/pic/master/image/20191108105200.png)
 
-从上面图中，我们看出了sapi就是这样的一个中间过程，SAPI提供了一个和外部通信的接口，有点类似于socket，使得PHP可以和其他应用进行交互数据（apache，nginx等）。php默认提供了很多种SAPI，常见的提供给apache和nginx的php5_module、CGI、FastCGI，给IIS的ISAPI，以及Shell的CLI。
+从上面图中，我们看出了sapi就是这样的一个中间过程，SAPI提供了一个和外部通信的接口，有点类似于socket，使得PHP可以和其他应用进行交互数据（apache，nginx等）。php默认提供了很多种SAPI，常见的提供给apache和nginx的php5\_module、CGI、FastCGI，给IIS的ISAPI，以及Shell的CLI。
 
 所以，以上的apache调用php执行的过程如下：
 
-```
+```text
 apache -> httpd -> php5_module -> sapi -> php
 ```
 
-好了。apache与php通过php5_module的方式就搞清楚了吧！
+好了。apache与php通过php5\_module的方式就搞清楚了吧！
 
 这种模式将php模块安装到apache中，所以每一次apache结束请求，都会产生一条进程，这个进程就完整的包括php的各种运算计算等操作。
 
 在上图中，我们很清晰的可以看到，apache每接收一个请求，都会产生一个进程来连接php通过sapi来完成请求，可想而知，如果一旦用户过多，并发数过多，服务器就会承受不住了。
 
-而且，把mod_php编进apache时，出问题时很难定位是php的问题还是apache的问题。
+而且，把mod\_php编进apache时，出问题时很难定位是php的问题还是apache的问题。
 
 ## CGI
 
@@ -85,7 +87,7 @@ CGI的好处就是完全独立于任何服务器，仅仅是做为中间分子�
 
 从根本上来说，FastCGI是用来提高CGI程序性能的。类似于CGI，**FastCGI也可以说是一种协议**。
 
-FastCGI像是一个**常驻(long-live)型的CGI**，它可以一直执行着，只要激活后，不会每次都要花费时间去fork一次。它还支持分布式的运算, 即 FastCGI 程序可以在网站服务器以外的主机上执行，并且接受来自其它网站服务器来的请求。
+FastCGI像是一个**常驻\(long-live\)型的CGI**，它可以一直执行着，只要激活后，不会每次都要花费时间去fork一次。它还支持分布式的运算, 即 FastCGI 程序可以在网站服务器以外的主机上执行，并且接受来自其它网站服务器来的请求。
 
 FastCGI是语言无关的、可伸缩架构的CGI开放扩展，其主要行为是将CGI解释器进程保持在内存中，并因此获得较高的性能。众所周知，CGI解释器的反复加载是CGI性能低下的主要原因，如果CGI解释器保持在内存中，并接受FastCGI进程管理器调度，则可以提供良好的性能、伸缩性、Fail- Over特性等等。
 
@@ -95,16 +97,18 @@ FastCGI接口方式采用C/S结构，可以将HTTP服务器和脚本解析服务
 
 ![](https://raw.githubusercontent.com/haxianhe/pic/master/image/20191108105451.png)
 
-1. Web Server启动时载入FastCGI进程管理器（Apache Module或IIS ISAPI等)
-2. FastCGI进程管理器自身初始化，启动多个CGI解释器进程(可建多个php-cgi)，并等待来自Web Server的连接。
-当客户端请求到达Web 
+1. Web Server启动时载入FastCGI进程管理器（Apache Module或IIS ISAPI等\)
+2. FastCGI进程管理器自身初始化，启动多个CGI解释器进程\(可建多个php-cgi\)，并等待来自Web Server的连接。
+
+   当客户端请求到达Web 
+
 3. Server时，FastCGI进程管理器选择并连接到一个CGI解释器。Web server将CGI环境变量和标准输入发送到FastCGI子进程php-cgi。
-4. FastCGI子进程完成处理后，将标准输出和错误信息从同一连接返回Web Server。当FastCGI子进程关闭连接时，请求便告处理完成。FastCGI子进程接着等待，并处理来自FastCGI进程管理器(运行在Web Server中)的下一个连接。 在CGI模式中，php-cgi在此便退出了。
+4. FastCGI子进程完成处理后，将标准输出和错误信息从同一连接返回Web Server。当FastCGI子进程关闭连接时，请求便告处理完成。FastCGI子进程接着等待，并处理来自FastCGI进程管理器\(运行在Web Server中\)的下一个连接。 在CGI模式中，php-cgi在此便退出了。
 
 FastCGI与CGI特点：
 
-- FastCGI，所有这些都只在进程启动时发生一次。一个额外的好处是，持续数据库连接(Persistent database connection)可以工作。
-- 由于FastCGI是多进程，所以比CGI多线程消耗更多的服务器内存，php-cgi解释器每进程消耗7至25兆内存，将这个数字乘以50或100就是很大的内存数。
+* FastCGI，所有这些都只在进程启动时发生一次。一个额外的好处是，持续数据库连接\(Persistent database connection\)可以工作。
+* 由于FastCGI是多进程，所以比CGI多线程消耗更多的服务器内存，php-cgi解释器每进程消耗7至25兆内存，将这个数字乘以50或100就是很大的内存数。
 
 ## PHP-FPM
 
@@ -129,4 +133,5 @@ PHP-FPM通过生成新的子进程可以实现php.ini修改后的平滑重启。
 
 ![](https://raw.githubusercontent.com/haxianhe/pic/master/image/20191108105958.png)
 
-所以，如果要搭建一个高性能的PHP WEB服务器，目前最佳的方式是Apache/Nginx + FastCGI + PHP-FPM(+PHP-CGI)方式了，不要再使用 Module加载或者 CGI 方式了。
+所以，如果要搭建一个高性能的PHP WEB服务器，目前最佳的方式是Apache/Nginx + FastCGI + PHP-FPM\(+PHP-CGI\)方式了，不要再使用 Module加载或者 CGI 方式了。
+

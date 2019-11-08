@@ -1,3 +1,5 @@
+# Session 原理解析
+
 Session存在的意义，估计每个做web开发的人都是了解的，就为了解决HTTP是无状态协议所带来的问题，不多说了。这里主要想说的是服务端与客户端是如何利用session进行交互的。
 
 ## 工作流程
@@ -6,11 +8,11 @@ Session存在的意义，估计每个做web开发的人都是了解的，就为�
 
 ![](https://raw.githubusercontent.com/haxianhe/pic/master/image/20191108194847.png)
 
-当用户第一次访问站点时，PHP会用session_start()函数为用户创建一个session ID，这就是针对这个用户的唯一标识，每一个访问的用户都会得到一个自己独有的session ID，这个session ID会存放在响应头里的cookie中，之后发送给客户端。这样客户端就会拥有一个该站点给他的session ID。
+当用户第一次访问站点时，PHP会用session\_start\(\)函数为用户创建一个session ID，这就是针对这个用户的唯一标识，每一个访问的用户都会得到一个自己独有的session ID，这个session ID会存放在响应头里的cookie中，之后发送给客户端。这样客户端就会拥有一个该站点给他的session ID。
 
 当用户第二次访问该站点时，浏览器会带着本地存放的cookie（里面存有上次得到的session ID）随着请求一起发送到服务器，服务端接到请求后会检测是否有session ID，如果有就会找到响应的session文件，把其中的信息读取出来；如果没有就跟第一次一样再创建个新的。
 
-通常站点的退出功能，实际上就是调用一下session_destroy()函数(也有可能更复杂些)，把该用户的session文件删除，再把用户的cookie清除。这样客户端和服务端就算没有联系了。
+通常站点的退出功能，实际上就是调用一下session\_destroy\(\)函数\(也有可能更复杂些\)，把该用户的session文件删除，再把用户的cookie清除。这样客户端和服务端就算没有联系了。
 
 图中的红框部分就是一次完整的HTTP请求，因为HTTP是无状态的，所以一次请求完成后客户端和服务端就不再有任何关系了，谁也不认识谁。但由于一些需要（如保持登录状态等），必须让服务端和客户端保持联系，session ID就成了这种联系的媒介了。
 
@@ -24,7 +26,7 @@ Session存在的意义，估计每个做web开发的人都是了解的，就为�
 
 ## 服务端的工作
 
-由上面的流程图可以看到，服务端实际上是把产生的一些数据存放在了session文件中，该文件的名字就是”sess“加上session ID，这些文件的存放位置就是phpinfo()查到的session.savepath值。
+由上面的流程图可以看到，服务端实际上是把产生的一些数据存放在了session文件中，该文件的名字就是”sess“加上session ID，这些文件的存放位置就是phpinfo\(\)查到的session.savepath值。
 
 ![](https://raw.githubusercontent.com/haxianhe/pic/master/image/20191108195320.png)
 
@@ -44,8 +46,9 @@ PHP GC进程可以扫描session存放目录清除session文件，但这个进程
 
 ## PHP关于Session的常用函数
 
-- **session_start()**： 启动session，这个没什么说的了。根据session ID打开session文件，如果没有session ID就创建一个ID和对应的session文件
-- **$SESSION[]**：存放用户信息的全局数组，session文件中除了存放$SESSION中的数据实际也会存放其他的信息，如id等
-- **sessionunset()**： 清空$SESSION数组，它是把数组里的值清空了，而$SESSION这个变量还是存在的，和unset($SESSION)是完全不同的概念
-- **sessioncommit()**：提交session数据并结束session，把$SESSION数据写到文件里并结束session。实际上当一个页面执行结束后，php会自动执行与这个函数相同的操作。所以这个函数也很少能用上
-- **session_destroy()**：注销session，这个就是关闭session，并删除掉相应的session文件了。切断了客户端和服务端的联系。
+* **session\_start\(\)**： 启动session，这个没什么说的了。根据session ID打开session文件，如果没有session ID就创建一个ID和对应的session文件
+* **$SESSION\[\]**：存放用户信息的全局数组，session文件中除了存放$SESSION中的数据实际也会存放其他的信息，如id等
+* **sessionunset\(\)**： 清空$SESSION数组，它是把数组里的值清空了，而$SESSION这个变量还是存在的，和unset\($SESSION\)是完全不同的概念
+* **sessioncommit\(\)**：提交session数据并结束session，把$SESSION数据写到文件里并结束session。实际上当一个页面执行结束后，php会自动执行与这个函数相同的操作。所以这个函数也很少能用上
+* **session\_destroy\(\)**：注销session，这个就是关闭session，并删除掉相应的session文件了。切断了客户端和服务端的联系。
+
