@@ -1,7 +1,7 @@
 # Table of contents
 
 * [简介](README.md)
-* [第一章 PHP基础](di-yi-zhang-php-ji-chu.md)
+* [第一章 PHP 基础](di-yi-zhang-php-ji-chu.md)
 * [第二章 PHP 底层原理](di-er-zhang-php-di-ceng-yuan-li/README.md)
   * [1. PHP底层的运行机制与原理](di-er-zhang-php-di-ceng-yuan-li/php-di-ceng-de-yun-hang-ji-zhi-yu-yuan-li.md)
   * [2. CGI、FastCGI和PHP-FPM关系解析](di-er-zhang-php-di-ceng-yuan-li/cgifastcgi-he-phpfpm-guan-xi-jie-xi.md)
