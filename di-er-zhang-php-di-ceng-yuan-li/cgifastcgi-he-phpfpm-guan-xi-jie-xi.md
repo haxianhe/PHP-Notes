@@ -1,4 +1,4 @@
-# 2. CGI、FastCGI和PHP-FPM关系解析
+# 3.2 CGI、FastCGI和PHP-FPM关系解析
 
 在搭建 LAMP/LNMP 服务器时，会经常遇到 PHP-FPM、FastCGI和CGI 这几个概念。如果对它们一知半解，很难搭建出高性能的服务器。接下来我们就以图形方式，解释这些概念之间的关系。
 
